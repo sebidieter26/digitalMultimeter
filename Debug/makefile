@@ -38,34 +38,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := digitalVoltmeter
+BUILD_ARTIFACT_NAME := digitalMultimeter
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-digitalVoltmeter.elf \
+digitalMultimeter.elf \
 
 MAP_FILES += \
-digitalVoltmeter.map \
+digitalMultimeter.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-digitalVoltmeter.list \
+digitalMultimeter.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: digitalVoltmeter.elf secondary-outputs
+main-build: digitalMultimeter.elf secondary-outputs
 
 # Tool invocations
-digitalVoltmeter.elf digitalVoltmeter.map: $(OBJS) $(USER_OBJS) C:\Users\Pepi\STM32CubeIDE\workspace_1.14.1\digitalVoltmeter\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "digitalVoltmeter.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Pepi\STM32CubeIDE\workspace_1.14.1\digitalVoltmeter\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="digitalVoltmeter.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+digitalMultimeter.elf digitalMultimeter.map: $(OBJS) $(USER_OBJS) C:\proiecte\digitalVoltmeter\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "digitalMultimeter.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\proiecte\digitalVoltmeter\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="digitalMultimeter.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -74,14 +74,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-digitalVoltmeter.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "digitalVoltmeter.list"
+digitalMultimeter.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "digitalMultimeter.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) default.size.stdout digitalVoltmeter.elf digitalVoltmeter.list digitalVoltmeter.map
+	-$(RM) default.size.stdout digitalMultimeter.elf digitalMultimeter.list digitalMultimeter.map
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

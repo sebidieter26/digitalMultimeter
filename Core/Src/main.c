@@ -31,7 +31,8 @@
 /* USER CODE BEGIN PTD */
 uint16_t raw = 0;
 char voltageStr[20];
-char voltageStr2[15];
+char amperStr[20];
+char ohmStr[20];
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -428,12 +429,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+	if(GPIO_Pin == )
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartVoltMeter */
@@ -446,6 +453,8 @@ static void MX_GPIO_Init(void)
 void StartVoltMeter(void *argument)
 {
   /* USER CODE BEGIN 5 */
+	osThreadSuspend(amperMeterHandle);
+	osThreadSuspend(ohmmeterHandle);
   /* Infinite loop */
   for(;;)
   {
@@ -471,10 +480,20 @@ void StartVoltMeter(void *argument)
 void StartAmperMeter(void *argument)
 {
   /* USER CODE BEGIN StartAmperMeter */
+	osThreadSuspend(voltMeterHandle);
+	osThreadSuspend(ohmmeterHandle);
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1,100);
+	raw = HAL_ADC_GetValue(&hadc1);
+	float voltage = raw*(3.3/4096);
+	float ampers = voltage/220;
+	snprintf(amperStr, sizeof(amperStr), "%.2f A", ampers);
+	HD44780_SetCursor(0,1);
+	HD44780_PrintStr(amperStr);
+    osDelay(100);
   }
   /* USER CODE END StartAmperMeter */
 }
