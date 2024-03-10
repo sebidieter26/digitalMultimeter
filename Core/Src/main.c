@@ -74,6 +74,13 @@ const osThreadAttr_t ohmmeter_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for defaultPrint */
+osThreadId_t defaultPrintHandle;
+const osThreadAttr_t defaultPrint_attributes = {
+  .name = "defaultPrint",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* Definitions for myQueue01 */
 osMessageQueueId_t myQueue01Handle;
 const osMessageQueueAttr_t myQueue01_attributes = {
@@ -93,6 +100,7 @@ static void MX_USART1_UART_Init(void);
 void StartVoltMeter(void *argument);
 void StartAmperMeter(void *argument);
 void StartOhmMeter(void *argument);
+void StartPrint(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -136,10 +144,7 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HD44780_Init(2);
-  HD44780_Clear();
-  HD44780_SetCursor(0,0);
-  HD44780_PrintStr("PEPI'S VOLTMETER");
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -174,6 +179,9 @@ int main(void)
 
   /* creation of ohmmeter */
   ohmmeterHandle = osThreadNew(StartOhmMeter, NULL, &ohmmeter_attributes);
+
+  /* creation of defaultPrint */
+  defaultPrintHandle = osThreadNew(StartPrint, NULL, &defaultPrint_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -429,7 +437,16 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PA8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
@@ -439,7 +456,13 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	if(GPIO_Pin == )
+	if(GPIO_Pin == GPIO_PIN_8){
+        osThreadSuspend(amperMeterHandle);
+        osThreadSuspend(ohmmeterHandle);
+        osThreadSuspend(defaultPrintHandle);
+        osThreadResume(voltMeterHandle);
+	}
+
 }
 /* USER CODE END 4 */
 
@@ -453,8 +476,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 void StartVoltMeter(void *argument)
 {
   /* USER CODE BEGIN 5 */
-	osThreadSuspend(amperMeterHandle);
-	osThreadSuspend(ohmmeterHandle);
   /* Infinite loop */
   for(;;)
   {
@@ -463,9 +484,13 @@ void StartVoltMeter(void *argument)
     raw = HAL_ADC_GetValue(&hadc1);
     float voltage = raw*(3.3/4096);
     snprintf(voltageStr, sizeof(voltageStr), "%.2f V", voltage);
+	HD44780_Init(2);
+	HD44780_Clear();
 	HD44780_SetCursor(0,1);
     HD44780_PrintStr(voltageStr);
     osDelay(100);
+
+    HAL_GPIO_EXTI_Callback(GPIO_PIN_8);
   }
   /* USER CODE END 5 */
 }
@@ -480,8 +505,6 @@ void StartVoltMeter(void *argument)
 void StartAmperMeter(void *argument)
 {
   /* USER CODE BEGIN StartAmperMeter */
-	osThreadSuspend(voltMeterHandle);
-	osThreadSuspend(ohmmeterHandle);
   /* Infinite loop */
   for(;;)
   {
@@ -491,9 +514,13 @@ void StartAmperMeter(void *argument)
 	float voltage = raw*(3.3/4096);
 	float ampers = voltage/220;
 	snprintf(amperStr, sizeof(amperStr), "%.2f A", ampers);
+	HD44780_Init(2);
+	HD44780_Clear();
 	HD44780_SetCursor(0,1);
 	HD44780_PrintStr(amperStr);
     osDelay(100);
+
+    HAL_GPIO_EXTI_Callback(GPIO_PIN_8);
   }
   /* USER CODE END StartAmperMeter */
 }
@@ -512,8 +539,37 @@ void StartOhmMeter(void *argument)
   for(;;)
   {
     osDelay(1);
+
+    HAL_GPIO_EXTI_Callback(GPIO_PIN_8);
   }
   /* USER CODE END StartOhmMeter */
+}
+
+/* USER CODE BEGIN Header_StartPrint */
+/**
+* @brief Function implementing the defaultPrint thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartPrint */
+void StartPrint(void *argument)
+{
+  /* USER CODE BEGIN StartPrint */
+
+  /* Infinite loop */
+  for(;;)
+  {
+	  HD44780_Init(2);
+	  HD44780_Clear();
+	  HD44780_SetCursor(0,0);
+	  HD44780_PrintStr("/////DIGITAL////");
+	  HD44780_SetCursor(0,1);
+	  HD44780_PrintStr("///MULTIMETER///");
+	  osDelay(100);
+
+	  HAL_GPIO_EXTI_Callback(GPIO_PIN_8);
+  }
+  /* USER CODE END StartPrint */
 }
 
 /**
