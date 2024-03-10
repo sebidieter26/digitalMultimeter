@@ -37,7 +37,9 @@ char ohmStr[20];
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define DEFAULT 0
+#define MEASURE 1
+uint8_t mod = DEFAULT;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -456,14 +458,14 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	if(GPIO_Pin == GPIO_PIN_8){
-        osThreadSuspend(amperMeterHandle);
-        osThreadSuspend(ohmmeterHandle);
-        osThreadSuspend(defaultPrintHandle);
-        osThreadResume(voltMeterHandle);
+	if(GPIO_Pin == B1_Pin && mod == DEFAULT){
+		mod = MEASURE;
+	}
+		else if(GPIO_Pin == B1_Pin && mod == MEASURE){
+			mod = DEFAULT;
+		}
 	}
 
-}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartVoltMeter */
@@ -479,18 +481,23 @@ void StartVoltMeter(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	if(mod == DEFAULT){
+		osThreadResume(defaultPrintHandle);
+		osThreadSuspend(voltMeterHandle);
+		osThreadSuspend(amperMeterHandle);
+		osThreadSuspend(ohmmeterHandle);
+	}
+
+	else{
     HAL_ADC_Start(&hadc1);
     HAL_ADC_PollForConversion(&hadc1, 100);
     raw = HAL_ADC_GetValue(&hadc1);
     float voltage = raw*(3.3/4096);
     snprintf(voltageStr, sizeof(voltageStr), "%.2f V", voltage);
-	HD44780_Init(2);
-	HD44780_Clear();
-	HD44780_SetCursor(0,1);
     HD44780_PrintStr(voltageStr);
     osDelay(100);
+	}
 
-    HAL_GPIO_EXTI_Callback(GPIO_PIN_8);
   }
   /* USER CODE END 5 */
 }
@@ -508,19 +515,22 @@ void StartAmperMeter(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	if(mod == DEFAULT){
+		osThreadResume(defaultPrintHandle);
+		osThreadSuspend(voltMeterHandle);
+		osThreadSuspend(amperMeterHandle);
+		osThreadSuspend(ohmmeterHandle);
+		}
+	else{
 	HAL_ADC_Start(&hadc1);
 	HAL_ADC_PollForConversion(&hadc1,100);
 	raw = HAL_ADC_GetValue(&hadc1);
 	float voltage = raw*(3.3/4096);
 	float ampers = voltage/220;
 	snprintf(amperStr, sizeof(amperStr), "%.2f A", ampers);
-	HD44780_Init(2);
-	HD44780_Clear();
-	HD44780_SetCursor(0,1);
 	HD44780_PrintStr(amperStr);
     osDelay(100);
-
-    HAL_GPIO_EXTI_Callback(GPIO_PIN_8);
+		}
   }
   /* USER CODE END StartAmperMeter */
 }
@@ -540,7 +550,6 @@ void StartOhmMeter(void *argument)
   {
     osDelay(1);
 
-    HAL_GPIO_EXTI_Callback(GPIO_PIN_8);
   }
   /* USER CODE END StartOhmMeter */
 }
@@ -559,6 +568,13 @@ void StartPrint(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	  if(mod == MEASURE){
+	  		osThreadResume(voltMeterHandle);
+	  		osThreadResume(amperMeterHandle);
+	  		osThreadResume(ohmmeterHandle);
+	  		osThreadSuspend(defaultPrintHandle);
+	  	}
+	  else{
 	  HD44780_Init(2);
 	  HD44780_Clear();
 	  HD44780_SetCursor(0,0);
@@ -566,8 +582,7 @@ void StartPrint(void *argument)
 	  HD44780_SetCursor(0,1);
 	  HD44780_PrintStr("///MULTIMETER///");
 	  osDelay(100);
-
-	  HAL_GPIO_EXTI_Callback(GPIO_PIN_8);
+	  }
   }
   /* USER CODE END StartPrint */
 }
