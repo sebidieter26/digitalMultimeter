@@ -167,8 +167,8 @@ void EXTI9_5_IRQHandler(void)
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 
   /* USER CODE END EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(Amper_Button_Pin);
   HAL_GPIO_EXTI_IRQHandler(Ohm_Button_Pin);
+  HAL_GPIO_EXTI_IRQHandler(Amper_Button_Pin);
   HAL_GPIO_EXTI_IRQHandler(Volt_Button_Pin);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 

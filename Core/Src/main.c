@@ -37,7 +37,11 @@ char ohmStr[20];
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define modprint 0
+#define modvolt 1
+#define modamper 2
+#define modohm 3
+uint8_t mod = modprint;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -80,11 +84,6 @@ const osThreadAttr_t defaultPrint_attributes = {
   .name = "defaultPrint",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for myQueue01 */
-osMessageQueueId_t myQueue01Handle;
-const osMessageQueueAttr_t myQueue01_attributes = {
-  .name = "myQueue01"
 };
 /* USER CODE BEGIN PV */
 
@@ -161,10 +160,6 @@ int main(void)
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
-
-  /* Create the queue(s) */
-  /* creation of myQueue01 */
-  myQueue01Handle = osMessageQueueNew (16, sizeof(uint16_t), &myQueue01_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -437,11 +432,23 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Amper_Button_Pin Ohm_Button_Pin Volt_Button_Pin */
-  GPIO_InitStruct.Pin = Amper_Button_Pin|Ohm_Button_Pin|Volt_Button_Pin;
+  /*Configure GPIO pin : Amper_Button_Pin */
+  GPIO_InitStruct.Pin = Amper_Button_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(Amper_Button_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Volt_Button_Pin */
+  GPIO_InitStruct.Pin = Volt_Button_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Volt_Button_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Ohm_Button_Pin */
+  GPIO_InitStruct.Pin = Ohm_Button_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Ohm_Button_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
@@ -457,20 +464,26 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	if(GPIO_Pin == B1_Pin){
-		osThreadResume(defaultPrintHandle);
+		if(mod == modvolt || mod == modamper || mod == modohm){
+			mod = modprint;
+		}
 	}
-	else if(GPIO_Pin == Volt_Button_Pin){
-		osThreadResume(voltMeterHandle);
+	if(GPIO_Pin == Volt_Button_Pin){
+		if(mod == modprint || mod == modamper || mod == modohm){
+			mod = modvolt;
+		}
 	}
-	else if(GPIO_Pin == Amper_Button_Pin){
-		osThreadResume(amperMeterHandle);
+	if(GPIO_Pin == Amper_Button_Pin){
+		if(mod == modprint || mod == modvolt || mod == modohm){
+			mod = modamper;
+		}
 	}
-	else if(GPIO_Pin == Ohm_Button_Pin){
-		osThreadResume(ohmmeterHandle);
+	if(GPIO_Pin == Ohm_Button_Pin){
+		if(mod == modprint || mod == modvolt || mod == modamper){
+			mod = modohm;
+		}
 	}
-	else(osThreadResume(defaultPrintHandle));
-	}
-
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartVoltMeter */
@@ -483,12 +496,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 void StartVoltMeter(void *argument)
 {
   /* USER CODE BEGIN 5 */
+	osThreadSuspend(defaultPrintHandle);
+	osThreadSuspend(amperMeterHandle);
+	osThreadSuspend(ohmmeterHandle);
   /* Infinite loop */
   for(;;)
   {
-	osThreadSuspend(amperMeterHandle);
-	osThreadSuspend(ohmmeterHandle);
-	osThreadSuspend(defaultPrintHandle);
+	if(mod == modprint){
+		osThreadResume(defaultPrintHandle);
+	}
+	else if(mod == modamper){
+		osThreadResume(amperMeterHandle);
+	}
+	else if(mod == modohm){
+		osThreadResume(ohmmeterHandle);
+	}else{
 
 	HD44780_Init(2);
 	HD44780_Clear();
@@ -503,6 +525,7 @@ void StartVoltMeter(void *argument)
     HD44780_SetCursor(0,1);
     HD44780_PrintStr(voltageStr);
     osDelay(100);
+	}
 
   }
   /* USER CODE END 5 */
@@ -518,12 +541,21 @@ void StartVoltMeter(void *argument)
 void StartAmperMeter(void *argument)
 {
   /* USER CODE BEGIN StartAmperMeter */
+	osThreadSuspend(defaultPrintHandle);
+	osThreadSuspend(voltMeterHandle);
+	osThreadSuspend(ohmmeterHandle);
   /* Infinite loop */
   for(;;)
   {
-	osThreadSuspend(voltMeterHandle);
-	osThreadSuspend(ohmmeterHandle);
-	osThreadSuspend(defaultPrintHandle);
+	  if(mod == modprint){
+		  osThreadResume(defaultPrintHandle);
+	  }
+	  else if(mod == modvolt){
+		  osThreadResume(voltMeterHandle);
+	  }
+	  else if(mod == modohm){
+		  osThreadResume(ohmmeterHandle);
+	  }else{
 
 	HD44780_Init(2);
 	HD44780_Clear();
@@ -539,6 +571,7 @@ void StartAmperMeter(void *argument)
 	HD44780_SetCursor(0,1);
 	HD44780_PrintStr(amperStr);
     osDelay(100);
+	  }
 
   }
   /* USER CODE END StartAmperMeter */
@@ -554,10 +587,10 @@ void StartAmperMeter(void *argument)
 void StartOhmMeter(void *argument)
 {
   /* USER CODE BEGIN StartOhmMeter */
+
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
 
   }
   /* USER CODE END StartOhmMeter */
@@ -573,13 +606,21 @@ void StartOhmMeter(void *argument)
 void StartPrint(void *argument)
 {
   /* USER CODE BEGIN StartPrint */
-
+osThreadSuspend(voltMeterHandle);
+osThreadSuspend(amperMeterHandle);
+osThreadSuspend(ohmmeterHandle);
   /* Infinite loop */
   for(;;)
   {
-	  osThreadSuspend(voltMeterHandle);
-	  osThreadSuspend(amperMeterHandle);
-	  osThreadSuspend(ohmmeterHandle);
+	  if(mod == modvolt){
+		  osThreadResume(voltMeterHandle);
+	  }
+	  else if(mod == modamper){
+		  osThreadResume(amperMeterHandle);
+	  }
+	  else if(mod == modprint){
+		  osThreadResume(defaultPrintHandle);
+	  }else{
 
 	  HD44780_Init(2);
 	  HD44780_Clear();
@@ -588,6 +629,7 @@ void StartPrint(void *argument)
 	  HD44780_SetCursor(0,1);
 	  HD44780_PrintStr("///MULTIMETER///");
 	  osDelay(100);
+	  }
 
   }
   /* USER CODE END StartPrint */

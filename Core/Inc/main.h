@@ -66,12 +66,9 @@ void Error_Handler(void);
 #define USART_RX_GPIO_Port GPIOA
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
-#define Amper_Button_Pin GPIO_PIN_6
-#define Amper_Button_GPIO_Port GPIOA
+#define Amper_Button_Pin GPIO_PIN_7
+#define Amper_Button_GPIO_Port GPIOC
 #define Amper_Button_EXTI_IRQn EXTI9_5_IRQn
-#define Ohm_Button_Pin GPIO_PIN_7
-#define Ohm_Button_GPIO_Port GPIOA
-#define Ohm_Button_EXTI_IRQn EXTI9_5_IRQn
 #define Volt_Button_Pin GPIO_PIN_8
 #define Volt_Button_GPIO_Port GPIOA
 #define Volt_Button_EXTI_IRQn EXTI9_5_IRQn
@@ -81,6 +78,9 @@ void Error_Handler(void);
 #define TCK_GPIO_Port GPIOA
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
+#define Ohm_Button_Pin GPIO_PIN_6
+#define Ohm_Button_GPIO_Port GPIOB
+#define Ohm_Button_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 
