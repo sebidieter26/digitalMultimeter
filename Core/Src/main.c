@@ -85,6 +85,28 @@ const osThreadAttr_t defaultPrint_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for adcAcquire */
+osThreadId_t adcAcquireHandle;
+const osThreadAttr_t adcAcquire_attributes = {
+  .name = "adcAcquire",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for voltQueue */
+osMessageQueueId_t voltQueueHandle;
+const osMessageQueueAttr_t voltQueue_attributes = {
+  .name = "voltQueue"
+};
+/* Definitions for queueAmper */
+osMessageQueueId_t queueAmperHandle;
+const osMessageQueueAttr_t queueAmper_attributes = {
+  .name = "queueAmper"
+};
+/* Definitions for queueOhm */
+osMessageQueueId_t queueOhmHandle;
+const osMessageQueueAttr_t queueOhm_attributes = {
+  .name = "queueOhm"
+};
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -100,6 +122,7 @@ void StartVoltMeter(void *argument);
 void StartAmperMeter(void *argument);
 void StartOhmMeter(void *argument);
 void StartPrint(void *argument);
+void StartADC(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -161,6 +184,16 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of voltQueue */
+  voltQueueHandle = osMessageQueueNew (16, sizeof(uint16_t), &voltQueue_attributes);
+
+  /* creation of queueAmper */
+  queueAmperHandle = osMessageQueueNew (16, sizeof(uint16_t), &queueAmper_attributes);
+
+  /* creation of queueOhm */
+  queueOhmHandle = osMessageQueueNew (16, sizeof(uint16_t), &queueOhm_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -177,6 +210,9 @@ int main(void)
 
   /* creation of defaultPrint */
   defaultPrintHandle = osThreadNew(StartPrint, NULL, &defaultPrint_attributes);
+
+  /* creation of adcAcquire */
+  adcAcquireHandle = osThreadNew(StartADC, NULL, &adcAcquire_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -483,6 +519,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 			mod = modohm;
 		}
 	}
+
 }
 /* USER CODE END 4 */
 
@@ -499,6 +536,7 @@ void StartVoltMeter(void *argument)
 	osThreadSuspend(defaultPrintHandle);
 	osThreadSuspend(amperMeterHandle);
 	osThreadSuspend(ohmmeterHandle);
+	uint16_t voltraw;
   /* Infinite loop */
   for(;;)
   {
@@ -517,9 +555,6 @@ void StartVoltMeter(void *argument)
 	HD44780_SetCursor(0,0);
 	HD44780_PrintStr("VOLTMETER");
 
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, 100);
-    raw = HAL_ADC_GetValue(&hadc1);
     float voltage = raw*(3.3/4096);
     snprintf(voltageStr, sizeof(voltageStr), "%.2f V", voltage);
     HD44780_SetCursor(0,1);
@@ -544,6 +579,7 @@ void StartAmperMeter(void *argument)
 	osThreadSuspend(defaultPrintHandle);
 	osThreadSuspend(voltMeterHandle);
 	osThreadSuspend(ohmmeterHandle);
+	uint16_t amperraw;
   /* Infinite loop */
   for(;;)
   {
@@ -562,9 +598,6 @@ void StartAmperMeter(void *argument)
 	HD44780_SetCursor(0,0);
 	HD44780_PrintStr("AMPERMETER");
 
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_PollForConversion(&hadc1,100);
-	raw = HAL_ADC_GetValue(&hadc1);
 	float voltage = raw*(3.3/4096);
 	float ampers = voltage/220;
 	snprintf(amperStr, sizeof(amperStr), "%.2f A", ampers);
@@ -633,6 +666,30 @@ osThreadSuspend(ohmmeterHandle);
 
   }
   /* USER CODE END StartPrint */
+}
+
+/* USER CODE BEGIN Header_StartADC */
+/**
+* @brief Function implementing the adcAcquire thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartADC */
+void StartADC(void *argument)
+{
+  /* USER CODE BEGIN StartADC */
+  /* Infinite loop */
+  for(;;)
+  {
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_PollForConversion(&hadc1,100);
+	raw = HAL_ADC_GetValue(&hadc1);
+	osMessageQueuePut(voltQueueHandle, &raw, 1, 10);
+	osMessageQueuePut(queueAmperHandle, &raw, 1, 10);
+	osMessageQueuePut(queueOhmHandle, &raw, 1, 10);
+    osDelay(100);
+  }
+  /* USER CODE END StartADC */
 }
 
 /**
