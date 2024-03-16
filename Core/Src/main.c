@@ -499,28 +499,28 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	if(GPIO_Pin == B1_Pin){
-		if(mod == modvolt || mod == modamper || mod == modohm){
-			mod = modprint;
-		}
-	}
-	if(GPIO_Pin == Volt_Button_Pin){
-		if(mod == modprint || mod == modamper || mod == modohm){
-			mod = modvolt;
-		}
-	}
-	if(GPIO_Pin == Amper_Button_Pin){
-		if(mod == modprint || mod == modvolt || mod == modohm){
-			mod = modamper;
-		}
-	}
-	if(GPIO_Pin == Ohm_Button_Pin){
-		if(mod == modprint || mod == modvolt || mod == modamper){
-			mod = modohm;
-		}
-	}
-
+    if(GPIO_Pin == B1_Pin){
+        if(mod == modvolt || mod == modamper || mod == modohm){
+            mod = modprint;
+        }
+    }
+    if(GPIO_Pin == Volt_Button_Pin){
+        if(mod == modprint || mod == modamper || mod == modohm){
+            mod = modvolt;
+        }
+    }
+    if(GPIO_Pin == Amper_Button_Pin){
+        if(mod == modprint || mod == modvolt || mod == modohm){
+            mod = modamper;
+        }
+    }
+    if(GPIO_Pin == Ohm_Button_Pin){
+        if(mod == modprint || mod == modvolt || mod == modamper){
+            mod = modohm;
+        }
+    }
 }
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartVoltMeter */
@@ -536,7 +536,6 @@ void StartVoltMeter(void *argument)
 	osThreadSuspend(defaultPrintHandle);
 	osThreadSuspend(amperMeterHandle);
 	osThreadSuspend(ohmmeterHandle);
-	uint16_t voltraw;
   /* Infinite loop */
   for(;;)
   {
@@ -555,7 +554,7 @@ void StartVoltMeter(void *argument)
 	HD44780_SetCursor(0,0);
 	HD44780_PrintStr("VOLTMETER");
 
-    float voltage = raw*(3.3/4096);
+    float voltage = 0;
     snprintf(voltageStr, sizeof(voltageStr), "%.2f V", voltage);
     HD44780_SetCursor(0,1);
     HD44780_PrintStr(voltageStr);
@@ -579,7 +578,6 @@ void StartAmperMeter(void *argument)
 	osThreadSuspend(defaultPrintHandle);
 	osThreadSuspend(voltMeterHandle);
 	osThreadSuspend(ohmmeterHandle);
-	uint16_t amperraw;
   /* Infinite loop */
   for(;;)
   {
@@ -598,8 +596,7 @@ void StartAmperMeter(void *argument)
 	HD44780_SetCursor(0,0);
 	HD44780_PrintStr("AMPERMETER");
 
-	float voltage = raw*(3.3/4096);
-	float ampers = voltage/220;
+	float ampers = 0;
 	snprintf(amperStr, sizeof(amperStr), "%.2f A", ampers);
 	HD44780_SetCursor(0,1);
 	HD44780_PrintStr(amperStr);
@@ -651,8 +648,8 @@ osThreadSuspend(ohmmeterHandle);
 	  else if(mod == modamper){
 		  osThreadResume(amperMeterHandle);
 	  }
-	  else if(mod == modprint){
-		  osThreadResume(defaultPrintHandle);
+	  else if(mod == modohm){
+		  osThreadResume(ohmmeterHandle);
 	  }else{
 
 	  HD44780_Init(2);

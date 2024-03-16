@@ -7,9 +7,9 @@
 ../Core/Src/main.c:443:13:MX_GPIO_Init	48	static
 ../Core/Src/main.c:501:6:HAL_GPIO_EXTI_Callback	16	static
 ../Core/Src/main.c:533:6:StartVoltMeter	32	static
-../Core/Src/main.c:576:6:StartAmperMeter	32	static
-../Core/Src/main.c:620:6:StartOhmMeter	16	static
-../Core/Src/main.c:639:6:StartPrint	16	static
-../Core/Src/main.c:678:6:StartADC	16	static
-../Core/Src/main.c:703:6:HAL_TIM_PeriodElapsedCallback	16	static
-../Core/Src/main.c:720:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:575:6:StartAmperMeter	32	static
+../Core/Src/main.c:617:6:StartOhmMeter	16	static
+../Core/Src/main.c:636:6:StartPrint	16	static
+../Core/Src/main.c:675:6:StartADC	16	static
+../Core/Src/main.c:700:6:HAL_TIM_PeriodElapsedCallback	16	static
+../Core/Src/main.c:717:6:Error_Handler	4	static,ignoring_inline_asm
