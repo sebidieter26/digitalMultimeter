@@ -37,11 +37,7 @@ char ohmStr[20];
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define modprint 0
-#define modvolt 1
-#define modamper 2
-#define modohm 3
-uint8_t mod;
+uint16_t Button_Pressed = RESET;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -139,6 +135,7 @@ void StartADC(void *argument);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -166,7 +163,10 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  osThreadSuspend(defaultPrintHandle);
+  osThreadSuspend(voltMeterHandle);
+  osThreadSuspend(amperMeterHandle);
+  osThreadSuspend(ohmmeterHandle);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -226,6 +226,7 @@ int main(void)
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -260,7 +261,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 72;
+  RCC_OscInitStruct.PLL.PLLN = 84;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 7;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -304,7 +305,7 @@ static void MX_ADC1_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
@@ -501,28 +502,24 @@ static void MX_GPIO_Init(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
     switch(GPIO_Pin){
         case B1_Pin:
-            if(mod == modvolt || mod == modamper || mod == modohm){
-                mod = modprint;
-            }
-            break;
-        case Volt_Button_Pin:
-            if(mod == modprint || mod == modamper || mod == modohm){
-                mod = modvolt;
-            }
-            break;
-        case Amper_Button_Pin:
-            if(mod == modprint || mod == modvolt || mod == modohm){
-                mod = modamper;
-            }
-            break;
-        case Ohm_Button_Pin:
-            if(mod == modprint || mod == modvolt || mod == modamper){
-                mod = modohm;
-            }
-            break;
-        default:
+            Button_Pressed = B1_Pin;
             osThreadResume(defaultPrintHandle);
             break;
+        case Volt_Button_Pin:
+        	Button_Pressed = Volt_Button_Pin;
+        	osThreadResume(voltMeterHandle);
+        	break;
+        case Amper_Button_Pin:
+        	Button_Pressed = Amper_Button_Pin;
+        	osThreadResume(amperMeterHandle);
+        	break;
+        case Ohm_Button_Pin:
+        	Button_Pressed = Ohm_Button_Pin;
+        	osThreadResume(ohmmeterHandle);
+        	break;
+        default:
+        	osThreadResume(defaultPrintHandle);
+        	break;
     }
 }
 
@@ -545,17 +542,7 @@ osThreadSuspend(ohmmeterHandle);
   /* Infinite loop */
   for(;;)
   {
-	switch(mod){
-	case modprint:
-		osThreadResume(defaultPrintHandle);
-		break;
-	case modamper:
-		osThreadResume(amperMeterHandle);
-		break;
-	case modohm:
-		osThreadResume(ohmmeterHandle);
-		break;
-	case modvolt:
+
 	HD44780_Init(2);
 	HD44780_Clear();
 	HD44780_SetCursor(0,0);
@@ -565,8 +552,7 @@ osThreadSuspend(ohmmeterHandle);
     HD44780_SetCursor(0,1);
     HD44780_PrintStr(voltageStr);
     osDelay(100);
-	break;
-	}
+
   }
   /* USER CODE END 5 */
 }
@@ -587,17 +573,7 @@ osThreadSuspend(ohmmeterHandle);
   /* Infinite loop */
   for(;;)
   {
-	switch(mod){
-	case modprint:
-		osThreadResume(defaultPrintHandle);
-		break;
-	case modvolt:
-		osThreadResume(voltMeterHandle);
-		break;
-	case modohm:
-		osThreadResume(ohmmeterHandle);
-		break;
-	case modamper:
+
 	HD44780_Init(2);
 	HD44780_Clear();
 	HD44780_SetCursor(0,0);
@@ -607,8 +583,6 @@ osThreadSuspend(ohmmeterHandle);
 	HD44780_SetCursor(0,1);
 	HD44780_PrintStr(amperStr);
     osDelay(100);
-	break;
-	 }
 
   }
   /* USER CODE END StartAmperMeter */
@@ -630,17 +604,7 @@ osThreadSuspend(amperMeterHandle);
   /* Infinite loop */
   for(;;)
   {
-	  switch(mod){
-	  	case modprint:
-	  		osThreadResume(defaultPrintHandle);
-	  		break;
-	  	case modvolt:
-	  		osThreadResume(voltMeterHandle);
-	  		break;
-	  	case modamper:
-	  		osThreadResume(amperMeterHandle);
-	  		break;
-	  	case modohm:
+
 	  	HD44780_Init(2);
 	  	HD44780_Clear();
 	  	HD44780_SetCursor(0,0);
@@ -650,8 +614,7 @@ osThreadSuspend(amperMeterHandle);
 	  	HD44780_SetCursor(0,1);
 	  	HD44780_PrintStr(ohmStr);
 	    osDelay(100);
-	  	break;
-	  }
+
   }
   /* USER CODE END StartOhmMeter */
 }
@@ -672,17 +635,7 @@ osThreadSuspend(ohmmeterHandle);
   /* Infinite loop */
   for(;;)
   {
-	  switch(mod){
-	  	case modvolt:
-	  		osThreadResume(voltMeterHandle);
-	  		break;
-	  	case modamper:
-	  		osThreadResume(amperMeterHandle);
-	  		break;
-	  	case modohm:
-	  		osThreadResume(ohmmeterHandle);
-	  		break;
-	  	case modprint:
+
 	  		HD44780_Init(2);
 	  		HD44780_Clear();
 	  		HD44780_SetCursor(0,0);
@@ -690,8 +643,7 @@ osThreadSuspend(ohmmeterHandle);
 	  		HD44780_SetCursor(0,1);
 	  		HD44780_PrintStr("///MULTIMETER///");
 	  		osDelay(100);
-	  		break;
-	  }
+
   }
   /* USER CODE END StartPrint */
 }
