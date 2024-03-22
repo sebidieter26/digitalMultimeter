@@ -39,7 +39,6 @@ char ohmStr[20];
 /* USER CODE BEGIN PD */
 
 uint16_t Button_Pressed = RESET;
-
 #define modprint 0
 #define modvolt 1
 #define modamper 2
@@ -171,10 +170,7 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  osThreadSuspend(defaultPrintHandle);
-  osThreadSuspend(voltMeterHandle);
-  osThreadSuspend(amperMeterHandle);
-  osThreadSuspend(ohmmeterHandle);
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
