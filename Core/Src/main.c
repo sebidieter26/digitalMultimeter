@@ -29,21 +29,15 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-uint16_t raw = 0;
-char voltageStr[20];
-char amperStr[20];
-char ohmStr[20];
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
-uint16_t Button_Pressed = RESET;
 #define modprint 0
 #define modvolt 1
 #define modamper 2
 #define modohm 3
-uint8_t mod = modprint;
 
 /* USER CODE END PD */
 
@@ -111,7 +105,12 @@ const osMessageQueueAttr_t queueOhm_attributes = {
   .name = "queueOhm"
 };
 /* USER CODE BEGIN PV */
-
+uint16_t raw = 0;
+char voltageStr[20];
+char amperStr[20];
+char ohmStr[20];
+uint8_t mod = modprint;
+uint16_t Button_Pressed = RESET;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -610,9 +609,10 @@ void StartAmperMeter(void *argument)
     osDelay(100);
     break;
   }
+  }
   /* USER CODE END StartAmperMeter */
 }
-}
+
 /* USER CODE BEGIN Header_StartOhmMeter */
 /**
 * @brief Function implementing the ohmmeter thread.
