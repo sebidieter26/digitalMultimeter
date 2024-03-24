@@ -506,15 +506,19 @@ static void MX_GPIO_Init(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 	switch(GPIO_Pin){
 	case B1_Pin:
+		Button_Pressed = B1_Pin;
 		mod = modprint;
 		break;
 	case Volt_Button_Pin:
+		Button_Pressed = Volt_Button_Pin;
 		mod = modvolt;
 		break;
 	case Amper_Button_Pin:
+		Button_Pressed = Amper_Button_Pin;
 		mod = modamper;
 		break;
 	case Ohm_Button_Pin:
+		Button_Pressed = Ohm_Button_Pin;
 		mod = modohm;
 		break;
 	}
@@ -540,29 +544,28 @@ void StartVoltMeter(void *argument)
   for(;;)
   {
 
-	if(mod == modprint){
+	switch(mod){
+	case modprint:
 		osThreadResume(defaultPrintHandle);
-	}
-	else if(mod == modamper){
+		break;
+	case modamper:
 		osThreadResume(amperMeterHandle);
-	}
-	else if(mod == modohm){
+		break;
+	case modohm:
 		osThreadResume(ohmmeterHandle);
-	}else if(mod == modvolt){
-
+		break;
+	case modvolt:
 	HD44780_Init(2);
 	HD44780_Clear();
 	HD44780_SetCursor(0,0);
 	HD44780_PrintStr("VOLTMETER");
-
     float voltage = 0;
     snprintf(voltageStr, sizeof(voltageStr), "%.2f V", voltage);
     HD44780_SetCursor(0,1);
     HD44780_PrintStr(voltageStr);
     osDelay(100);
-
+    break;
 	}
-
 
   }
   /* USER CODE END 5 */
@@ -584,16 +587,17 @@ void StartAmperMeter(void *argument)
   /* Infinite loop */
   for(;;)
   {
-
-	  if(mod == modprint){
-		  osThreadResume(defaultPrintHandle);
-	  }
-	  else if(mod == modvolt){
-		  osThreadResume(voltMeterHandle);
-	  }
-	  else if(mod == modohm){
-		  osThreadResume(ohmmeterHandle);
-	  }else if(mod == modamper){
+	  switch(mod){
+	case modprint:
+		osThreadResume(defaultPrintHandle);
+		break;
+	case modvolt:
+		osThreadResume(voltMeterHandle);
+		break;
+	case modohm:
+		osThreadResume(ohmmeterHandle);
+		break;
+	case modamper:
 	HD44780_Init(2);
 	HD44780_Clear();
 	HD44780_SetCursor(0,0);
@@ -604,13 +608,11 @@ void StartAmperMeter(void *argument)
 	HD44780_SetCursor(0,1);
 	HD44780_PrintStr(amperStr);
     osDelay(100);
-
-	  }
-
+    break;
   }
   /* USER CODE END StartAmperMeter */
 }
-
+}
 /* USER CODE BEGIN Header_StartOhmMeter */
 /**
 * @brief Function implementing the ohmmeter thread.
@@ -627,17 +629,17 @@ osThreadSuspend(amperMeterHandle);
   /* Infinite loop */
   for(;;)
   {
-	  if(mod == modprint){
-		  osThreadResume(defaultPrintHandle);
-	  }
-	  else if(mod == modvolt){
-		  osThreadResume(voltMeterHandle);
-	  }
-	  else if(mod == modamper){
-		  osThreadResume(amperMeterHandle);
-	  }
-	  else if(mod == modohm){
-
+	  switch(mod){
+	case modprint:
+		osThreadResume(defaultPrintHandle);
+		break;
+	case modvolt:
+		osThreadResume(voltMeterHandle);
+		break;
+	case modamper:
+		osThreadResume(amperMeterHandle);
+		break;
+	case modohm:
 	  	HD44780_Init(2);
 	  	HD44780_Clear();
 	  	HD44780_SetCursor(0,0);
@@ -647,6 +649,7 @@ osThreadSuspend(amperMeterHandle);
 	  	HD44780_SetCursor(0,1);
 	  	HD44780_PrintStr(ohmStr);
 	    osDelay(100);
+	    break;
 	  }
 
   }
@@ -670,16 +673,17 @@ osThreadSuspend(ohmmeterHandle);
   for(;;)
   {
 
-	  if(mod == modvolt){
-		  osThreadResume(voltMeterHandle);
-	  }
-	  else if(mod == modamper){
-		  osThreadResume(amperMeterHandle);
-	  }
-	  else if(mod == modohm){
-		  osThreadResume(ohmmeterHandle);
-	  }else if(mod == modprint){
-
+	  switch(mod){
+	case modohm:
+		osThreadResume(ohmmeterHandle);
+		break;
+	case modvolt:
+		osThreadResume(voltMeterHandle);
+		break;
+	case modamper:
+		osThreadResume(amperMeterHandle);
+		break;
+	case modprint:
 	  HD44780_Init(2);
 	  HD44780_Clear();
 	  HD44780_SetCursor(0,0);
@@ -687,6 +691,7 @@ osThreadSuspend(ohmmeterHandle);
 	  HD44780_SetCursor(0,1);
 	  HD44780_PrintStr("///MULTIMETER///");
 	  osDelay(100);
+	  break;
 	  }
 
   }
