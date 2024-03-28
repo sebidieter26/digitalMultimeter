@@ -25,6 +25,7 @@
 #include "liquidcrystal_i2c.h"
 #include "stdio.h"
 #include "string.h"
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -143,6 +144,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+
 
   /* USER CODE END 1 */
 
@@ -503,24 +505,56 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	switch(GPIO_Pin){
-	case B1_Pin:
-		Button_Pressed = B1_Pin;
-		mod = modprint;
-		break;
-	case Volt_Button_Pin:
-		Button_Pressed = Volt_Button_Pin;
-		mod = modvolt;
-		break;
-	case Amper_Button_Pin:
-		Button_Pressed = Amper_Button_Pin;
-		mod = modamper;
-		break;
-	case Ohm_Button_Pin:
-		Button_Pressed = Ohm_Button_Pin;
-		mod = modohm;
-		break;
-	}
+	enum Mode {SELECT_MODE, VOLTMETER_MODE, AMPERMETER_MODE, OHMMETER_MODE };
+		enum Mode currentState = SELECT_MODE;
+		bool checkButton(uint16_t GPIO_Pin) {
+		  if (currentState == SELECT_MODE && GPIO_Pin == B1_Pin) {
+		    currentState = SELECT_MODE;
+		    return true;
+		  } else if (currentState == SELECT_MODE) {
+		    if (GPIO_Pin == Volt_Button_Pin) {
+		      currentState = VOLTMETER_MODE;
+		      return true;
+		    } else if (GPIO_Pin == Amper_Button_Pin) {
+		      currentState = AMPERMETER_MODE;
+		      return true;
+		    } else if (GPIO_Pin == Ohm_Button_Pin) {
+		      currentState = OHMMETER_MODE;
+		      return true;
+		    } else {
+		      // Handle unexpected button press in SELECT_MODE (optional)
+		      return false;
+		    }
+		  } else if (currentState == VOLTMETER_MODE && GPIO_Pin == Volt_Button_Pin) {
+		    // Perform voltmeter operations here
+		    return true;
+		  } else if (currentState == AMPERMETER_MODE && GPIO_Pin == Amper_Button_Pin) {
+		    // Perform ammeter operations here
+		    return true;
+		  } else if (currentState == OHMMETER_MODE && GPIO_Pin == Ohm_Button_Pin) {
+		    // Perform ohmmeter operations here
+		    return true;
+		  }
+		  return false;
+		}
+
+		void selectNextMode() {
+		  switch (currentState) {
+		    case SELECT_MODE:
+		      currentState = VOLTMETER_MODE;
+		      break;
+		    case VOLTMETER_MODE:
+		      currentState = AMPERMETER_MODE;
+		      break;
+		    case AMPERMETER_MODE:
+		      currentState = OHMMETER_MODE;
+		      break;
+		    case OHMMETER_MODE:
+		      // Optional: Can reset to DEFAULT_MODE or cycle back to VOLTMETER_MODE
+		      break;
+		  }
+		}
+
 
 }
 
@@ -536,12 +570,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 void StartVoltMeter(void *argument)
 {
   /* USER CODE BEGIN 5 */
-	osThreadSuspend(defaultPrintHandle);
-	osThreadSuspend(amperMeterHandle);
-	osThreadSuspend(ohmmeterHandle);
+
   /* Infinite loop */
   for(;;)
   {
+		osThreadSuspend(defaultPrintHandle);
+		osThreadSuspend(amperMeterHandle);
+		osThreadSuspend(ohmmeterHandle);
 
 	switch(mod){
 	case modprint:
@@ -580,12 +615,14 @@ void StartVoltMeter(void *argument)
 void StartAmperMeter(void *argument)
 {
   /* USER CODE BEGIN StartAmperMeter */
-	osThreadSuspend(defaultPrintHandle);
-	osThreadSuspend(voltMeterHandle);
-	osThreadSuspend(ohmmeterHandle);
+
   /* Infinite loop */
   for(;;)
   {
+		osThreadSuspend(defaultPrintHandle);
+		osThreadSuspend(voltMeterHandle);
+		osThreadSuspend(ohmmeterHandle);
+
 	  switch(mod){
 	case modprint:
 		osThreadResume(defaultPrintHandle);
@@ -623,12 +660,14 @@ void StartAmperMeter(void *argument)
 void StartOhmMeter(void *argument)
 {
   /* USER CODE BEGIN StartOhmMeter */
-osThreadSuspend(defaultPrintHandle);
-osThreadSuspend(voltMeterHandle);
-osThreadSuspend(amperMeterHandle);
+
   /* Infinite loop */
   for(;;)
   {
+	  osThreadSuspend(defaultPrintHandle);
+	  osThreadSuspend(voltMeterHandle);
+	  osThreadSuspend(amperMeterHandle);
+
 	  switch(mod){
 	case modprint:
 		osThreadResume(defaultPrintHandle);
@@ -666,12 +705,13 @@ osThreadSuspend(amperMeterHandle);
 void StartPrint(void *argument)
 {
   /* USER CODE BEGIN StartPrint */
-osThreadSuspend(voltMeterHandle);
-osThreadSuspend(amperMeterHandle);
-osThreadSuspend(ohmmeterHandle);
+
   /* Infinite loop */
   for(;;)
   {
+	  osThreadSuspend(voltMeterHandle);
+	  osThreadSuspend(amperMeterHandle);
+	  osThreadSuspend(ohmmeterHandle);
 
 	  switch(mod){
 	case modohm:
